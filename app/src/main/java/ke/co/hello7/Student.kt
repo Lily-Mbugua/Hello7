@@ -1,5 +1,7 @@
 package ke.co.hello7
 
+import com.google.gson.annotations.SerializedName
+
 data class Student(
     @SerializedName("student_id") var studentId: String,
     @SerializedName("first_name") var firstName: String,
@@ -8,4 +10,3 @@ data class Student(
     @SerializedName("phone_number") var phoneNumber: String,
     @SerializedName("image_url") var imageUrl: String
 )
-annotation class SerializedName(val value: String)

@@ -1,53 +1,67 @@
 package ke.co.hello7
 
 import android.content.Intent
+import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.preference.PreferenceActivity
 import android.widget.Toast
-import com.example.hello_app.R.layout.activity_main
 import kotlinx.android.synthetic.main.activity_main.*
-import okhttp3.*
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(activity_main)
-        btnLogin+-.setOnClickListener {
-            var userName = etUsername.text.toString()
-            var password = etPasswor.text.toString()
-            var UserName = ""
-            var requestBody = MultipartBody.Builder()
+        setContentView(R.layout.activity_main)
+
+        tvRegister.setOnClickListener {
+            val intent = Intent(baseContext, Registrationactivity::class.java)
+            startActivity(intent)
+        }
+
+        btnLogin.setOnClickListener {
+            var email = etUserName.text.toString()
+            var password = etPassword.text.toString()
+
+            val requestBody = MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
-                .addFormDataPart("UserName", UserName)
+                .addFormDataPart("email", email)
                 .addFormDataPart("password", password)
                 .build()
-            registerUser(requestBody)
-            var lastName = null
-            Toast.makeText(baseContext, lastName, Toast.LENGTH_SHORT).show()
+
+            loginUser(requestBody)
         }
     }
-    fun registerUser(requestBody: RequestBody) {
-        var apiClient = ApiClient.buildService(ApiInterface::class.java)
-        var registrationCall = apiClient.registerStudent(requestBody)
-        registrationCall.enqueue(object : Callback<RegistrationResponse>,
-            retrofit2.Callback<RegistrationResponse> {
-            fun onFailure(call: Call<RegistrationResponse>, t: Throwable) {
+
+    fun loginUser(requestBody: RequestBody){
+        val apiClient = ApiClient.buildService(ApiInterface::class.java)
+        val loginCall = apiClient.loginResponse(requestBody)
+
+        loginCall.enqueue(object :Callback<LoginResponse> {
+            override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
                 Toast.makeText(baseContext, t.message, Toast.LENGTH_LONG).show()
             }
-            fun onResponse(
-                call: Call<RegistrationResponse>,
-                response: Response<RegistrationResponse>
-            ) {
-                if (response.isSuccessful) {
+
+            override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
+                if (response.isSuccessful){
                     Toast.makeText(baseContext, response.body()?.message, Toast.LENGTH_LONG).show()
-                    startActivity(Intent(baseContext, MainActivity::class.java))
-                } else {
-                    Toast.makeText(baseContext, response.errorBody().toString(), Toast.LENGTH_LONG)
-                        .show()
+                    var accessToken = response.body()?.accessToken
+                    var sharedPreferences = PreferenceManager.getDefaultSharedPreferences(baseContext)
+                    var editor = sharedPreferences.edit()
+                    editor.putString("ACCESS_TOKEN_KEY", accessToken)
+                    editor.apply()
+                    val intent = Intent(baseContext, CourseActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                }
+                else{
+                    Toast.makeText(baseContext, response.errorBody().toString(), Toast.LENGTH_LONG).show()
                 }
             }
         })
     }
-}
-}
-}
 }
